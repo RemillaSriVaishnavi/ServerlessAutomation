@@ -1,0 +1,33 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_ACCOUNT_ID: "432998432349"
+    AWS_DEFAULT_REGION: "us-east-1"
+    REPOSITORY_NAME: "website"
+    IMAGE_TAG: "latest"
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$REPOSITORY_NAME
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
+
+  build:
+    commands:
+      - echo Build started on `date`
+      - ls -la
+      - echo Building Docker image...
+      - docker build -t website:latest .
+
+  post_build:
+    commands:
+      - echo Tagging image...
+      - docker tag website:latest $REPOSITORY_URI:latest
+      - echo Pushing image...
+      - docker push $REPOSITORY_URI:latest
+
+artifacts:
+  files:
+    - '**/*'
